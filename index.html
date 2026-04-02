@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GitHub Dashboard</title>
+<title>HubDash</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19,6 +19,7 @@
   --text-muted: #9198a1;
   --accent: #0969da;
   --accent-dim: rgba(9,105,218,0.08);
+  --accent-dim2: rgba(9,105,218,0.14);
   --green: #1a7f37;
   --green-dim: rgba(26,127,55,0.1);
   --yellow: #9a6700;
@@ -26,47 +27,42 @@
   --red: #d1242f;
   --red-dim: rgba(209,36,47,0.1);
   --purple: #8250df;
+  --status-h: 64px;
+  --topbar-h: 52px;
+  --sidebar-w: 240px;
   --radius: 8px;
   --radius-lg: 12px;
 }
+
+html, body { height: 100%; overflow: hidden; }
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Syne', sans-serif;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* ---- TOPBAR ---- */
+/* ========== TOPBAR ========== */
 #topbar {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 0 24px;
-  height: 56px;
+  height: var(--topbar-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  padding: 0 20px;
+  flex-shrink: 0;
+  z-index: 50;
 }
 
-.topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.app-name {
-  font-size: 1.1rem;
+.app-logo {
+  font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: -0.5px;
-  color: var(--text);
 }
-
-.app-name span { color: var(--accent); }
+.app-logo span { color: var(--accent); }
 
 .user-badge {
   display: flex;
@@ -76,111 +72,262 @@ body {
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: 4px 12px 4px 6px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-family: 'JetBrains Mono', monospace;
   color: var(--text-dim);
 }
 
 .user-avatar {
-  width: 24px;
-  height: 24px;
+  width: 22px; height: 22px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), var(--purple));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 800; color: #fff;
   flex-shrink: 0;
 }
 
 .btn-signout {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 0.75rem;
+  background: none; border: 1px solid var(--border);
+  color: var(--text-dim); border-radius: 6px;
+  padding: 4px 10px; font-size: 0.72rem;
   font-family: 'JetBrains Mono', monospace;
-  cursor: pointer;
-  transition: all 0.15s;
+  cursor: pointer; transition: all 0.15s;
 }
 .btn-signout:hover { border-color: var(--red); color: var(--red); }
 
-/* ---- LAYOUT ---- */
-#app { display: flex; flex: 1; }
+/* ========== BODY LAYOUT ========== */
+#workspace {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  /* leave room for status bar */
+  padding-bottom: var(--status-h);
+}
 
+/* ========== SIDEBAR ========== */
 #sidebar {
-  width: 220px;
+  width: var(--sidebar-w);
   background: var(--surface);
   border-right: 1px solid var(--border);
-  padding: 16px 0;
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
-.nav-section-label {
-  font-size: 0.65rem;
+.sidebar-section-label {
+  font-size: 0.62rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.8px;
   color: var(--text-muted);
-  padding: 8px 16px 4px;
-  margin-top: 8px;
+  padding: 14px 14px 6px;
 }
 
-.nav-item {
+#project-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px;
+}
+
+#project-list::-webkit-scrollbar { width: 4px; }
+#project-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.project-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
   cursor: pointer;
-  border-radius: 0;
-  font-size: 0.875rem;
+  transition: all 0.12s;
+  border: 1px solid transparent;
+  margin-bottom: 2px;
+}
+
+.project-item:hover {
+  background: var(--surface2);
+}
+
+.project-item.active {
+  background: var(--accent-dim2);
+  border-color: rgba(9,105,218,0.2);
+}
+
+.project-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.project-item.active .project-dot,
+.project-item:hover .project-dot { background: var(--accent); }
+
+.project-item.pages .project-dot { background: var(--green); }
+.project-item.active.pages .project-dot { background: var(--green); box-shadow: 0 0 5px var(--green); }
+
+.project-name {
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-dim);
-  transition: all 0.12s;
-  border-left: 2px solid transparent;
-  position: relative;
-}
-
-.nav-item:hover { background: var(--surface2); color: var(--text); }
-.nav-item.active { background: var(--accent-dim); color: var(--accent); border-left-color: var(--accent); }
-
-.nav-icon { font-size: 1rem; width: 18px; text-align: center; }
-
-#main {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   flex: 1;
-  padding: 24px;
-  overflow-y: auto;
-  max-width: 900px;
 }
 
-/* ---- SECTION HEADER ---- */
-.section-header {
+.project-item.active .project-name { color: var(--accent); }
+
+.project-private-badge {
+  font-size: 0.58rem;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--border2);
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+
+/* Manage section at bottom of sidebar */
+.sidebar-manage {
+  border-top: 1px solid var(--border2);
+  padding: 8px;
+}
+
+.btn-new-project {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  text-align: left;
 }
 
-.section-title {
-  font-size: 1.3rem;
+.btn-new-project:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.btn-new-project .plus {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.btn-new-project:hover .plus {
+  background: var(--accent-dim2);
+}
+
+/* ========== MAIN CONTENT ========== */
+#main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+#main::-webkit-scrollbar { width: 6px; }
+#main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ========== WELCOME / NO SELECTION ========== */
+#view-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.welcome-inner {
+  max-width: 360px;
+}
+
+.welcome-icon { font-size: 3rem; margin-bottom: 16px; }
+.welcome-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 8px; }
+.welcome-sub { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; }
+
+/* ========== PROJECT DETAIL ========== */
+#view-project { display: none; }
+
+.project-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.project-header-title {
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.5px;
 }
 
-.section-subtitle {
-  font-size: 0.8rem;
+.project-header-meta {
+  font-size: 0.78rem;
   color: var(--text-dim);
-  margin-top: 2px;
   font-family: 'JetBrains Mono', monospace;
+  margin-top: 4px;
 }
 
-/* ---- CARDS ---- */
+.project-header-meta a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.project-header-meta a:hover { text-decoration: underline; }
+
+.project-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ========== TABS ========== */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border2);
+  margin-bottom: 24px;
+}
+
+.tab {
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ========== CARDS ========== */
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -190,100 +337,25 @@ body {
 }
 
 .card-title {
-  font-size: 0.9rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  margin-bottom: 16px;
-  color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 0.75rem;
-}
-
-/* ---- REPO LIST ---- */
-.repo-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.15s;
-  background: var(--surface2);
-}
-
-.repo-item:hover { border-color: var(--accent); background: var(--accent-dim); }
-.repo-item.selected { border-color: var(--accent); background: var(--accent-dim); }
-
-.repo-name {
-  font-weight: 700;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.repo-visibility {
-  font-size: 0.65rem;
-  font-family: 'JetBrains Mono', monospace;
-  background: var(--border);
-  padding: 2px 7px;
-  border-radius: 10px;
-  color: var(--text-dim);
-  font-weight: 400;
-}
-
-.repo-meta {
-  font-size: 0.75rem;
+  letter-spacing: 0.8px;
   color: var(--text-muted);
-  font-family: 'JetBrains Mono', monospace;
-  margin-top: 3px;
+  margin-bottom: 16px;
 }
 
-.repo-actions {
-  display: flex;
-  gap: 6px;
-}
-
-/* ---- BUTTONS ---- */
-.btn {
-  font-family: 'Syne', sans-serif;
-  font-weight: 700;
-  font-size: 0.8rem;
-  border: none;
-  border-radius: 6px;
-  padding: 7px 14px;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-primary { background: var(--accent); color: #0d1117; }
-.btn-primary:hover { background: #79b8ff; }
-.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
-.btn-danger:hover { background: rgba(248,81,73,0.2); }
-.btn-success { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
-.btn-success:hover { background: rgba(63,185,80,0.2); }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.btn-sm { padding: 4px 10px; font-size: 0.75rem; }
-
-/* ---- FORM ---- */
+/* ========== FORM ========== */
 .form-group { margin-bottom: 14px; }
 
 .form-label {
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.77rem;
   font-weight: 700;
   color: var(--text-dim);
   margin-bottom: 6px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
 }
 
 .form-input {
@@ -298,18 +370,41 @@ body {
   transition: border-color 0.15s;
   outline: none;
 }
-
 .form-input:focus { border-color: var(--accent); }
 .form-input::placeholder { color: var(--text-muted); }
 
 .form-hint {
-  font-size: 0.72rem;
+  font-size: 0.71rem;
   color: var(--text-muted);
   margin-top: 5px;
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* ---- FILE UPLOAD ---- */
+/* ========== BUTTONS ========== */
+.btn {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #0558b6; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(209,36,47,0.25); }
+.btn-success { background: var(--green-dim); color: var(--green); border: 1px solid rgba(26,127,55,0.25); }
+.btn-success:hover { background: rgba(26,127,55,0.18); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+
+/* ========== FILE UPLOAD ========== */
 .drop-zone {
   border: 2px dashed var(--border);
   border-radius: var(--radius-lg);
@@ -319,15 +414,13 @@ body {
   transition: all 0.2s;
   background: var(--bg);
 }
-
 .drop-zone:hover, .drop-zone.drag-over {
   border-color: var(--accent);
   background: var(--accent-dim);
 }
-
 .drop-zone-icon { font-size: 2rem; margin-bottom: 8px; }
 .drop-zone-text { font-size: 0.85rem; color: var(--text-dim); }
-.drop-zone-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+.drop-zone-sub { font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
 
 .file-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
 
@@ -342,13 +435,12 @@ body {
   font-size: 0.8rem;
   font-family: 'JetBrains Mono', monospace;
 }
-
 .file-chip-name { color: var(--accent); }
 .file-chip-size { color: var(--text-muted); font-size: 0.72rem; }
-.file-chip-remove { cursor: pointer; color: var(--text-muted); padding: 0 2px; font-size: 1rem; line-height: 1; }
+.file-chip-remove { cursor: pointer; color: var(--text-muted); padding: 0 2px; font-size: 1.1rem; line-height: 1; }
 .file-chip-remove:hover { color: var(--red); }
 
-/* ---- BRANCH LIST ---- */
+/* ========== BRANCH LIST ========== */
 .branch-item {
   display: flex;
   align-items: center;
@@ -359,7 +451,6 @@ body {
   margin-bottom: 6px;
   background: var(--surface2);
 }
-
 .branch-name {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.85rem;
@@ -367,64 +458,130 @@ body {
   align-items: center;
   gap: 8px;
 }
-
 .branch-default-badge {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   background: var(--green-dim);
   color: var(--green);
-  border: 1px solid rgba(63,185,80,0.3);
+  border: 1px solid rgba(26,127,55,0.25);
   padding: 2px 7px;
   border-radius: 10px;
 }
 
-/* ---- DEPLOY STATUS ---- */
-.run-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  margin-bottom: 6px;
-  background: var(--surface2);
+/* ========== NEW PROJECT VIEW ========== */
+#view-new-project { display: none; }
+
+.new-project-header {
+  margin-bottom: 24px;
+}
+.new-project-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.new-project-sub {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-top: 4px;
 }
 
-.run-status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+/* ========== STATUS BAR ========== */
+#status-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: var(--status-h);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+  z-index: 100;
   flex-shrink: 0;
 }
 
-.run-status-dot.success { background: var(--green); box-shadow: 0 0 6px var(--green); }
-.run-status-dot.failure { background: var(--red); box-shadow: 0 0 6px var(--red); }
-.run-status-dot.in_progress { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); animation: blink 1s ease infinite alternate; }
-.run-status-dot.queued { background: var(--text-muted); }
-
-@keyframes blink { from { opacity: 0.4; } to { opacity: 1; } }
-
-.run-info { flex: 1; }
-.run-name { font-size: 0.85rem; font-weight: 600; }
-.run-meta { font-size: 0.72rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
-
-.run-badge {
-  font-size: 0.7rem;
-  font-family: 'JetBrains Mono', monospace;
-  padding: 3px 9px;
-  border-radius: 10px;
+.status-project-name {
+  font-size: 0.72rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
 }
 
-.run-badge.success { background: var(--green-dim); color: var(--green); }
-.run-badge.failure { background: var(--red-dim); color: var(--red); }
-.run-badge.in_progress { background: var(--yellow-dim); color: var(--yellow); }
-.run-badge.queued { background: var(--border); color: var(--text-muted); }
+.status-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border2);
+  flex-shrink: 0;
+}
 
-/* ---- TOAST ---- */
+#status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.status-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.status-dot.building { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); animation: pulse 1.2s ease infinite alternate; }
+.status-dot.failed { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.status-dot.none { background: var(--border); }
+
+@keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
+
+.status-text {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.status-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.status-tip {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--accent-dim);
+  border: 1px solid rgba(9,105,218,0.15);
+  border-radius: 6px;
+  padding: 5px 10px;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.status-url {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.74rem;
+}
+.status-url:hover { text-decoration: underline; }
+
+/* ========== EMPTY STATE ========== */
+.empty-state {
+  text-align: center;
+  padding: 36px 20px;
+  color: var(--text-muted);
+}
+.empty-state-icon { font-size: 2.2rem; margin-bottom: 10px; }
+.empty-state-text { font-size: 0.88rem; }
+
+/* ========== TOAST ========== */
 #toast-container {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: calc(var(--status-h) + 12px);
+  right: 20px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -435,35 +592,49 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 12px 18px;
-  font-size: 0.85rem;
-  min-width: 240px;
+  padding: 11px 16px;
+  font-size: 0.83rem;
+  min-width: 230px;
+  max-width: 360px;
   display: flex;
   align-items: center;
   gap: 10px;
   animation: slideIn 0.25s ease;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
-
 .toast.success { border-left: 3px solid var(--green); }
 .toast.error   { border-left: 3px solid var(--red); }
 .toast.info    { border-left: 3px solid var(--accent); }
 
 @keyframes slideIn {
   from { transform: translateX(120%); opacity: 0; }
-  to   { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(0); opacity: 1; }
 }
 
-/* ---- LOGIN SCREEN ---- */
+/* ========== SPINNER ========== */
+.spinner {
+  display: inline-block;
+  width: 13px; height: 13px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ========== LOGIN ========== */
 #login-screen {
-  min-height: 100vh;
+  position: fixed; inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg);
   background-image:
-    radial-gradient(ellipse at 30% 20%, rgba(9,105,218,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 20%, rgba(9,105,218,0.07) 0%, transparent 50%),
     radial-gradient(ellipse at 70% 80%, rgba(130,80,223,0.05) 0%, transparent 50%);
+  z-index: 200;
 }
 
 .login-card {
@@ -473,7 +644,7 @@ body {
   padding: 40px;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.12);
 }
 
 .login-logo {
@@ -482,7 +653,6 @@ body {
   letter-spacing: -1px;
   margin-bottom: 6px;
 }
-
 .login-logo span { color: var(--accent); }
 
 .login-subtitle {
@@ -501,73 +671,22 @@ body {
   font-size: 0.78rem;
   color: var(--text-dim);
   font-family: 'JetBrains Mono', monospace;
-  line-height: 1.8;
+  line-height: 1.9;
 }
-
 .token-steps a { color: var(--accent); text-decoration: none; }
 .token-steps a:hover { text-decoration: underline; }
 
-/* ---- EMPTY STATE ---- */
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-muted);
-}
-
-.empty-state-icon { font-size: 2.5rem; margin-bottom: 12px; }
-.empty-state-text { font-size: 0.9rem; }
-
-/* ---- DIVIDER ---- */
-.divider {
-  border: none;
-  border-top: 1px solid var(--border2);
-  margin: 20px 0;
-}
-
-/* ---- LOADING ---- */
-.spinner {
-  display: inline-block;
-  width: 14px; height: 14px;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  vertical-align: middle;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ---- PAGES STATUS ---- */
-.pages-status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: var(--radius);
-  font-size: 0.82rem;
-  margin-bottom: 12px;
-}
-
-.pages-status.live { background: var(--green-dim); border: 1px solid rgba(63,185,80,0.25); }
-.pages-status.building { background: var(--yellow-dim); border: 1px solid rgba(210,153,34,0.25); }
-.pages-status.none { background: var(--surface2); border: 1px solid var(--border2); }
-
-.pages-url { font-family: 'JetBrains Mono', monospace; color: var(--accent); text-decoration: none; font-size: 0.78rem; }
-.pages-url:hover { text-decoration: underline; }
-
-/* ---- FLEX UTILS ---- */
+/* ========== UTILS ========== */
 .flex { display: flex; }
 .gap-2 { gap: 8px; }
-.gap-3 { gap: 12px; }
 .items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.flex-wrap { flex-wrap: wrap; }
 .mt-2 { margin-top: 8px; }
-.mt-3 { margin-top: 12px; }
+.divider { border: none; border-top: 1px solid var(--border2); margin: 18px 0; }
 </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
+<!-- ===== LOGIN ===== -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">Hub<span>Dash</span></div>
@@ -584,20 +703,19 @@ body {
       <input type="password" id="token-input" class="form-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
       <div class="form-hint">Stored only in your browser. Never sent anywhere except GitHub.</div>
     </div>
-    <button class="btn btn-primary" style="width:100%; justify-content:center; padding:11px;" onclick="doLogin()">
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()">
       Connect to GitHub →
     </button>
-    <div id="login-error" style="color:var(--red);font-size:0.8rem;margin-top:10px;display:none;"></div>
+    <div id="login-error" style="color:var(--red);font-size:0.8rem;margin-top:10px;display:none"></div>
   </div>
 </div>
 
-<!-- MAIN APP (hidden until login) -->
-<div id="main-app" style="display:none; flex-direction:column; min-height:100vh;">
+<!-- ===== MAIN APP ===== -->
+<div id="main-app" style="display:none;flex-direction:column;height:100%">
 
+  <!-- Topbar -->
   <div id="topbar">
-    <div class="topbar-left">
-      <div class="app-name">Hub<span>Dash</span></div>
-    </div>
+    <div class="app-logo">Hub<span>Dash</span></div>
     <div class="flex items-center gap-2">
       <div class="user-badge">
         <div class="user-avatar" id="avatar-initials">?</div>
@@ -607,176 +725,132 @@ body {
     </div>
   </div>
 
-  <div id="app">
-    <!-- SIDEBAR -->
+  <!-- Workspace -->
+  <div id="workspace">
+
+    <!-- Sidebar -->
     <div id="sidebar">
-      <div class="nav-section-label">Navigate</div>
-      <div class="nav-item active" onclick="showView('repos')" id="nav-repos">
-        <span class="nav-icon">📁</span> Repositories
+      <div class="sidebar-section-label">Projects</div>
+      <div id="project-list">
+        <div class="empty-state" style="padding:20px">
+          <div class="spinner"></div>
+        </div>
       </div>
-      <div class="nav-item" onclick="showView('upload')" id="nav-upload">
-        <span class="nav-icon">⬆️</span> Upload Files
-      </div>
-      <div class="nav-item" onclick="showView('branches')" id="nav-branches">
-        <span class="nav-icon">🌿</span> Branches
-      </div>
-      <div class="nav-item" onclick="showView('deploy')" id="nav-deploy">
-        <span class="nav-icon">🚀</span> Deploy Status
-      </div>
-      <div class="nav-section-label">Manage</div>
-      <div class="nav-item" onclick="showView('new-repo')" id="nav-new-repo">
-        <span class="nav-icon">✨</span> New Repository
+      <div class="sidebar-manage">
+        <div class="sidebar-section-label" style="padding:0 4px 8px">Manage</div>
+        <button class="btn-new-project" onclick="showNewProject()">
+          <span class="plus">+</span>
+          New Project
+        </button>
       </div>
     </div>
 
-    <!-- MAIN CONTENT -->
+    <!-- Main Content -->
     <div id="main">
 
-      <!-- REPOS VIEW -->
-      <div id="view-repos" class="view">
-        <div class="section-header">
-          <div>
-            <div class="section-title">Repositories</div>
-            <div class="section-subtitle">Click a repo to select it for other operations</div>
-          </div>
-          <button class="btn btn-secondary btn-sm" onclick="loadRepos()"><span class="spinner" id="repos-spinner" style="display:none"></span> Refresh</button>
-        </div>
-        <div id="repo-list">
-          <div class="empty-state">
-            <div class="empty-state-icon">📁</div>
-            <div class="empty-state-text">Loading repositories...</div>
-          </div>
+      <!-- Welcome state -->
+      <div id="view-welcome">
+        <div class="welcome-inner">
+          <div class="welcome-icon">👈</div>
+          <div class="welcome-title">Select a Project</div>
+          <div class="welcome-sub">Choose a project from the sidebar to upload files, manage branches, and track deployments.</div>
         </div>
       </div>
 
-      <!-- UPLOAD VIEW -->
-      <div id="view-upload" class="view" style="display:none">
-        <div class="section-header">
+      <!-- Project Detail -->
+      <div id="view-project">
+
+        <div class="project-header">
           <div>
-            <div class="section-title">Upload Files</div>
-            <div class="section-subtitle" id="upload-repo-label">Select a repository first</div>
+            <div class="project-header-title" id="proj-title">—</div>
+            <div class="project-header-meta" id="proj-meta">—</div>
+          </div>
+          <div class="project-header-actions">
+            <a id="proj-gh-link" href="#" target="_blank" class="btn btn-secondary btn-sm">GitHub ↗</a>
+            <a id="proj-live-link" href="#" target="_blank" class="btn btn-success btn-sm" style="display:none">View Live ↗</a>
           </div>
         </div>
-        <div class="card">
-          <div class="form-group">
-            <label class="form-label">Repository</label>
-            <select id="upload-repo-select" class="form-input" onchange="onUploadRepoChange()">
-              <option value="">— choose a repo —</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Branch</label>
-            <select id="upload-branch-select" class="form-input">
-              <option value="">— select repo first —</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Target folder (optional)</label>
-            <input type="text" id="upload-path" class="form-input" placeholder="e.g. public/images  (leave blank for root)">
-            <div class="form-hint">Files will be placed in this folder. Leave blank to upload to the root.</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Commit message</label>
-            <input type="text" id="upload-message" class="form-input" placeholder="Update files" value="Update files">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Files</label>
-            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
-              ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onFileDrop(event)">
-              <div class="drop-zone-icon">📂</div>
-              <div class="drop-zone-text">Click to browse or drag & drop files here</div>
-              <div class="drop-zone-sub">Multiple files supported</div>
+
+        <!-- Tabs -->
+        <div class="tab-bar">
+          <div class="tab active" onclick="switchTab('upload')" id="tab-upload">⬆️ Upload Files</div>
+          <div class="tab" onclick="switchTab('branches')" id="tab-branches">🌿 Branches</div>
+        </div>
+
+        <!-- Upload Tab -->
+        <div class="tab-panel active" id="panel-upload">
+          <div class="card">
+            <div class="form-group">
+              <label class="form-label">Branch</label>
+              <select id="upload-branch-select" class="form-input"></select>
             </div>
-            <input type="file" id="file-input" multiple style="display:none" onchange="onFileSelect(event)">
-            <div class="file-list" id="file-list"></div>
+            <div class="form-group">
+              <label class="form-label">Target folder <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+              <input type="text" id="upload-path" class="form-input" placeholder="e.g. public/images  (leave blank for root)">
+              <div class="form-hint">Leave blank to upload to the root of the repo.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Commit message</label>
+              <input type="text" id="upload-message" class="form-input" placeholder="Update files" value="Update files">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Files</label>
+              <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+                ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onFileDrop(event)">
+                <div class="drop-zone-icon">📂</div>
+                <div class="drop-zone-text">Click to browse or drag &amp; drop files here</div>
+                <div class="drop-zone-sub">Multiple files supported</div>
+              </div>
+              <input type="file" id="file-input" multiple style="display:none" onchange="onFileSelect(event)">
+              <div class="file-list" id="file-list"></div>
+            </div>
+            <button class="btn btn-primary" onclick="doUpload()" id="upload-btn" disabled>
+              ⬆️ Upload &amp; Commit
+            </button>
           </div>
-          <button class="btn btn-primary" onclick="doUpload()" id="upload-btn" disabled>
-            ⬆️ Upload &amp; Commit
-          </button>
         </div>
-      </div>
 
-      <!-- BRANCHES VIEW -->
-      <div id="view-branches" class="view" style="display:none">
-        <div class="section-header">
-          <div>
-            <div class="section-title">Branches</div>
-            <div class="section-subtitle" id="branches-repo-label">Select a repository first</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="form-group">
-            <label class="form-label">Repository</label>
-            <select id="branches-repo-select" class="form-input" onchange="loadBranches()">
-              <option value="">— choose a repo —</option>
-            </select>
-          </div>
-          <div id="branch-list" style="margin-top:4px"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Create New Branch</div>
-          <div class="form-group">
-            <label class="form-label">New branch name</label>
-            <input type="text" id="new-branch-name" class="form-input" placeholder="e.g. feature/my-change">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Based on branch</label>
-            <select id="new-branch-from" class="form-input">
-              <option value="">— select repo first —</option>
-            </select>
-          </div>
-          <button class="btn btn-primary" onclick="doCreateBranch()">🌿 Create Branch</button>
-        </div>
-      </div>
-
-      <!-- DEPLOY VIEW -->
-      <div id="view-deploy" class="view" style="display:none">
-        <div class="section-header">
-          <div>
-            <div class="section-title">Deploy Status</div>
-            <div class="section-subtitle">GitHub Actions runs &amp; Pages status</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span id="poll-indicator" style="display:none;font-size:0.75rem;color:var(--yellow);font-family:'JetBrains Mono',monospace;">
-              <span class="spinner"></span> watching...
-            </span>
-            <button class="btn btn-secondary btn-sm" onclick="loadDeploy()">Refresh</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="form-group">
-            <label class="form-label">Repository</label>
-            <select id="deploy-repo-select" class="form-input" onchange="loadDeploy()">
-              <option value="">— choose a repo —</option>
-            </select>
-          </div>
-          <div id="pages-status-area"></div>
-          <div id="runs-list">
-            <div class="empty-state">
-              <div class="empty-state-icon">🚀</div>
-              <div class="empty-state-text">Select a repository to see deploy runs</div>
+        <!-- Branches Tab -->
+        <div class="tab-panel" id="panel-branches">
+          <div class="card">
+            <div class="card-title">Branches</div>
+            <div id="branch-list">
+              <div class="empty-state"><div class="spinner"></div></div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- NEW REPO VIEW -->
-      <div id="view-new-repo" class="view" style="display:none">
-        <div class="section-header">
-          <div>
-            <div class="section-title">New Repository</div>
-            <div class="section-subtitle">Create a new GitHub repository</div>
+          <div class="card">
+            <div class="card-title">Create New Branch</div>
+            <div class="form-group">
+              <label class="form-label">New branch name</label>
+              <input type="text" id="new-branch-name" class="form-input" placeholder="e.g. feature/my-change">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Based on branch</label>
+              <select id="new-branch-from" class="form-input">
+                <option value="">— select first —</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="doCreateBranch()">🌿 Create Branch</button>
           </div>
+        </div>
+
+      </div><!-- /view-project -->
+
+      <!-- New Project -->
+      <div id="view-new-project">
+        <div class="new-project-header">
+          <div class="new-project-title">New Project</div>
+          <div class="new-project-sub">Create a new GitHub repository</div>
         </div>
         <div class="card">
           <div class="form-group">
-            <label class="form-label">Repository name</label>
-            <input type="text" id="new-repo-name" class="form-input" placeholder="e.g. my-awesome-app">
+            <label class="form-label">Project name</label>
+            <input type="text" id="new-repo-name" class="form-input" placeholder="e.g. my-awesome-site">
             <div class="form-hint">Use lowercase letters, numbers, and hyphens.</div>
           </div>
           <div class="form-group">
-            <label class="form-label">Description (optional)</label>
-            <input type="text" id="new-repo-desc" class="form-input" placeholder="What's this repo for?">
+            <label class="form-label">Description <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+            <input type="text" id="new-repo-desc" class="form-input" placeholder="What's this project for?">
           </div>
           <div class="form-group">
             <label class="form-label">Visibility</label>
@@ -786,23 +860,41 @@ body {
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.85rem">
               <input type="checkbox" id="new-repo-readme" checked style="accent-color:var(--accent)">
               Initialize with README
             </label>
           </div>
           <div class="form-group">
-            <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.85rem">
               <input type="checkbox" id="new-repo-pages" style="accent-color:var(--accent)">
-              Enable GitHub Pages after creation (main branch)
+              Enable GitHub Pages after creation
             </label>
           </div>
-          <button class="btn btn-primary" onclick="doCreateRepo()">✨ Create Repository</button>
+          <div style="display:flex;gap:10px;margin-top:4px">
+            <button class="btn btn-primary" onclick="doCreateRepo()">✨ Create Project</button>
+            <button class="btn btn-secondary" onclick="cancelNewProject()">Cancel</button>
+          </div>
         </div>
       </div>
 
     </div><!-- /#main -->
-  </div><!-- /#app -->
+  </div><!-- /#workspace -->
+
+  <!-- Status Bar -->
+  <div id="status-bar">
+    <div class="status-project-name" id="status-project-name">No project selected</div>
+    <div class="status-divider"></div>
+    <div id="status-indicator">
+      <div class="status-dot none" id="status-dot"></div>
+      <div>
+        <div class="status-text" id="status-text">—</div>
+        <div class="status-meta" id="status-meta"></div>
+      </div>
+    </div>
+    <div id="status-tip" style="display:none" class="status-tip"></div>
+  </div>
+
 </div><!-- /#main-app -->
 
 <div id="toast-container"></div>
@@ -816,6 +908,11 @@ let currentUser = null;
 let repos = [];
 let selectedRepo = null;
 let uploadFiles = [];
+let activeTab = 'upload';
+let deployPollTimer = null;
+let lastDeployStatus = null; // 'live' | 'building' | 'failed' | 'none'
+let lastDeployTime = null;
+let deployFailTimer = null;
 
 // ============================================================
 // AUTH
@@ -823,29 +920,25 @@ let uploadFiles = [];
 async function doLogin() {
   const t = document.getElementById('token-input').value.trim();
   if (!t) { showLoginError('Please paste your token.'); return; }
-
   try {
     const res = await ghFetch('https://api.github.com/user', t);
     if (!res.ok) throw new Error('Invalid token or insufficient permissions.');
     const user = await res.json();
-    token = t;
-    currentUser = user;
+    token = t; currentUser = user;
     localStorage.setItem('gh_token', t);
     bootApp();
-  } catch (e) {
-    showLoginError(e.message);
-  }
+  } catch(e) { showLoginError(e.message); }
 }
 
 function showLoginError(msg) {
   const el = document.getElementById('login-error');
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.textContent = msg; el.style.display = 'block';
 }
 
 function doSignout() {
   localStorage.removeItem('gh_token');
-  token = ''; currentUser = null; repos = []; selectedRepo = null;
+  token=''; currentUser=null; repos=[]; selectedRepo=null;
+  stopStatusPolling();
   document.getElementById('main-app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
 }
@@ -856,13 +949,10 @@ function doSignout() {
 async function bootApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('main-app').style.display = 'flex';
-
   const initials = (currentUser.name || currentUser.login).split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('avatar-initials').textContent = initials;
   document.getElementById('username-display').textContent = currentUser.login;
-
   await loadRepos();
-  showView('repos');
 }
 
 // ============================================================
@@ -884,10 +974,10 @@ function ghFetch(url, tok, options = {}) {
 function toast(msg, type = 'info') {
   const el = document.createElement('div');
   el.className = `toast ${type}`;
-  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  const icons = { success:'✅', error:'❌', info:'ℹ️' };
   el.innerHTML = `<span>${icons[type]||''}</span><span>${msg}</span>`;
   document.getElementById('toast-container').appendChild(el);
-  setTimeout(() => el.remove(), 4000);
+  setTimeout(() => el.remove(), 4500);
 }
 
 function timeAgo(dateStr) {
@@ -900,123 +990,182 @@ function timeAgo(dateStr) {
   return `${Math.floor(hrs/24)}d ago`;
 }
 
-// ============================================================
-// NAVIGATION
-// ============================================================
-function showView(name) {
-  document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`view-${name}`).style.display = 'block';
-  document.getElementById(`nav-${name}`)?.classList.add('active');
-
-  if (name === 'deploy') loadDeploy();
-  else stopDeployPolling();
-  if (name === 'upload') syncRepoSelects();
-  if (name === 'branches') syncRepoSelects();
+function formatDateTime(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric' }) + ' at ' +
+    d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
 }
 
 // ============================================================
-// REPOS
+// REPOS / PROJECT LIST
 // ============================================================
 async function loadRepos() {
-  document.getElementById('repos-spinner').style.display = 'inline-block';
+  document.getElementById('project-list').innerHTML = '<div class="empty-state" style="padding:20px"><div class="spinner"></div></div>';
   try {
     const res = await ghFetch('https://api.github.com/user/repos?per_page=100&sort=updated');
     repos = await res.json();
-    renderRepos();
-    syncRepoSelects();
+    renderProjectList();
   } catch(e) {
-    toast('Failed to load repositories', 'error');
+    toast('Failed to load projects', 'error');
   }
-  document.getElementById('repos-spinner').style.display = 'none';
 }
 
-function renderRepos() {
-  const el = document.getElementById('repo-list');
+function renderProjectList() {
+  const el = document.getElementById('project-list');
   if (!repos.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">No repositories found.</div></div>';
+    el.innerHTML = '<div class="empty-state" style="padding:16px;font-size:0.8rem">No projects yet.</div>';
     return;
   }
   el.innerHTML = repos.map(r => `
-    <div class="repo-item ${selectedRepo?.name===r.name?'selected':''}" onclick="selectRepo('${r.name}')">
-      <div>
-        <div class="repo-name">
-          ${r.name}
-          <span class="repo-visibility">${r.private ? 'private' : 'public'}</span>
-          ${r.has_pages ? '<span class="branch-default-badge">Pages</span>' : ''}
-        </div>
-        <div class="repo-meta">${r.description || 'No description'} · updated ${timeAgo(r.updated_at)}</div>
-      </div>
-      <div class="repo-actions">
-        <a href="${r.html_url}" target="_blank" class="btn btn-secondary btn-sm">GitHub ↗</a>
-        ${r.has_pages ? `<a href="https://${currentUser.login}.github.io/${r.name}" target="_blank" class="btn btn-success btn-sm">Live ↗</a>` : ''}
-      </div>
+    <div class="project-item ${r.has_pages ? 'pages' : ''} ${selectedRepo?.name === r.name ? 'active' : ''}"
+         onclick="selectProject('${r.name}')">
+      <div class="project-dot"></div>
+      <div class="project-name">${r.name}</div>
+      ${r.private ? '<span class="project-private-badge">private</span>' : ''}
     </div>
   `).join('');
 }
 
-function selectRepo(name) {
+function selectProject(name) {
   selectedRepo = repos.find(r => r.name === name);
-  renderRepos();
-  // Sync all selects
-  ['upload-repo-select','branches-repo-select','deploy-repo-select'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (sel) sel.value = name;
-  });
-  onUploadRepoChange();
-  loadBranches();
-  toast(`Selected: ${name}`, 'info');
+  renderProjectList();
+
+  // Show project view
+  document.getElementById('view-welcome').style.display = 'none';
+  document.getElementById('view-project').style.display = 'block';
+  document.getElementById('view-new-project').style.display = 'none';
+
+  // Populate header
+  document.getElementById('proj-title').textContent = selectedRepo.name;
+  const meta = [];
+  if (selectedRepo.description) meta.push(selectedRepo.description);
+  meta.push(`Updated ${timeAgo(selectedRepo.updated_at)}`);
+  if (selectedRepo.has_pages) {
+    const url = `https://${currentUser.login}.github.io/${selectedRepo.name}`;
+    meta.push(`<a href="${url}" target="_blank">${url}</a>`);
+  }
+  document.getElementById('proj-meta').innerHTML = meta.join(' · ');
+  document.getElementById('proj-gh-link').href = selectedRepo.html_url;
+
+  const liveLink = document.getElementById('proj-live-link');
+  if (selectedRepo.has_pages) {
+    liveLink.href = `https://${currentUser.login}.github.io/${selectedRepo.name}`;
+    liveLink.style.display = 'inline-flex';
+  } else {
+    liveLink.style.display = 'none';
+  }
+
+  // Load branch data for both tabs
+  loadProjectBranches();
+
+  // Start status polling for this project
+  updateStatusBar();
+  startStatusPolling();
 }
 
-function syncRepoSelects() {
-  const opts = '<option value="">— choose a repo —</option>' + repos.map(r =>
-    `<option value="${r.name}" ${selectedRepo?.name===r.name?'selected':''}>${r.name}</option>`
+function showNewProject() {
+  selectedRepo = null;
+  renderProjectList();
+  stopStatusPolling();
+  document.getElementById('view-welcome').style.display = 'none';
+  document.getElementById('view-project').style.display = 'none';
+  document.getElementById('view-new-project').style.display = 'block';
+  setStatusNoProject();
+}
+
+function cancelNewProject() {
+  document.getElementById('view-new-project').style.display = 'none';
+  document.getElementById('view-welcome').style.display = 'flex';
+  setStatusNoProject();
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById(`panel-${tab}`).classList.add('active');
+}
+
+// ============================================================
+// BRANCHES
+// ============================================================
+async function loadProjectBranches() {
+  if (!selectedRepo) return;
+  const repoName = selectedRepo.name;
+
+  // Populate upload branch select
+  const uploadSel = document.getElementById('upload-branch-select');
+  uploadSel.innerHTML = '<option>Loading...</option>';
+
+  // Populate branch list display
+  document.getElementById('branch-list').innerHTML = '<div class="empty-state"><div class="spinner"></div></div>';
+
+  const res = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/branches`);
+  if (!res.ok) { toast('Could not load branches', 'error'); return; }
+  const branches = await res.json();
+
+  // Upload branch select
+  uploadSel.innerHTML = branches.map(b =>
+    `<option value="${b.name}" ${b.name === selectedRepo.default_branch ? 'selected' : ''}>${b.name}</option>`
   ).join('');
-  ['upload-repo-select','branches-repo-select','deploy-repo-select'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (sel) sel.innerHTML = opts;
+
+  // Branch list in branches tab
+  document.getElementById('branch-list').innerHTML = branches.length ? branches.map(b => `
+    <div class="branch-item">
+      <div class="branch-name">
+        🌿 ${b.name}
+        ${b.name === selectedRepo.default_branch ? '<span class="branch-default-badge">default</span>' : ''}
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="copyToClipboard('${b.name}')">Copy name</button>
+    </div>
+  `).join('') : '<div class="empty-state"><div class="empty-state-text">No branches found.</div></div>';
+
+  // "Based on" select for new branch
+  document.getElementById('new-branch-from').innerHTML = branches.map(b =>
+    `<option value="${b.name}" ${b.name === selectedRepo.default_branch ? 'selected' : ''}>${b.name}</option>`
+  ).join('');
+}
+
+async function doCreateBranch() {
+  if (!selectedRepo) return;
+  const newName = document.getElementById('new-branch-name').value.trim();
+  const fromBranch = document.getElementById('new-branch-from').value;
+  if (!newName) { toast('Enter a branch name', 'error'); return; }
+
+  const refRes = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${selectedRepo.name}/git/ref/heads/${fromBranch}`);
+  if (!refRes.ok) { toast('Could not get source branch info', 'error'); return; }
+  const refData = await refRes.json();
+
+  const res = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${selectedRepo.name}/git/refs`, null, {
+    method: 'POST',
+    body: JSON.stringify({ ref: `refs/heads/${newName}`, sha: refData.object.sha })
   });
-  if (selectedRepo) {
-    onUploadRepoChange();
-    loadBranches();
+
+  if (res.ok) {
+    toast(`Branch "${newName}" created!`, 'success');
+    document.getElementById('new-branch-name').value = '';
+    loadProjectBranches();
+  } else {
+    const err = await res.json();
+    toast(err.message || 'Failed to create branch', 'error');
   }
 }
 
 // ============================================================
 // UPLOAD
 // ============================================================
-async function onUploadRepoChange() {
-  const repoName = document.getElementById('upload-repo-select').value;
-  if (!repoName) return;
-  selectedRepo = repos.find(r => r.name === repoName);
-  document.getElementById('upload-repo-label').textContent = repoName;
-
-  const res = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/branches`);
-  const branches = await res.json();
-  const sel = document.getElementById('upload-branch-select');
-  sel.innerHTML = branches.map(b => `<option value="${b.name}" ${b.name===selectedRepo?.default_branch?'selected':''}>${b.name}</option>`).join('');
-}
-
-function onDragOver(e) {
-  e.preventDefault();
-  document.getElementById('drop-zone').classList.add('drag-over');
-}
-function onDragLeave(e) {
-  document.getElementById('drop-zone').classList.remove('drag-over');
-}
-function onFileDrop(e) {
-  e.preventDefault();
-  document.getElementById('drop-zone').classList.remove('drag-over');
-  addFiles([...e.dataTransfer.files]);
-}
-function onFileSelect(e) {
-  addFiles([...e.target.files]);
-}
+function onDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+function onDragLeave()  { document.getElementById('drop-zone').classList.remove('drag-over'); }
+function onFileDrop(e)  { e.preventDefault(); document.getElementById('drop-zone').classList.remove('drag-over'); addFiles([...e.dataTransfer.files]); }
+function onFileSelect(e){ addFiles([...e.target.files]); }
 
 function addFiles(newFiles) {
-  newFiles.forEach(f => {
-    if (!uploadFiles.find(x => x.name === f.name)) uploadFiles.push(f);
-  });
+  newFiles.forEach(f => { if (!uploadFiles.find(x => x.name === f.name)) uploadFiles.push(f); });
   renderFileList();
 }
 
@@ -1026,8 +1175,7 @@ function removeFile(name) {
 }
 
 function renderFileList() {
-  const el = document.getElementById('file-list');
-  el.innerHTML = uploadFiles.map(f => `
+  document.getElementById('file-list').innerHTML = uploadFiles.map(f => `
     <div class="file-chip">
       <span class="file-chip-name">${f.name}</span>
       <span class="file-chip-size">${(f.size/1024).toFixed(1)} KB</span>
@@ -1035,57 +1183,6 @@ function renderFileList() {
     </div>
   `).join('');
   document.getElementById('upload-btn').disabled = uploadFiles.length === 0;
-}
-
-async function doUpload() {
-  const repoName = document.getElementById('upload-repo-select').value;
-  const branch   = document.getElementById('upload-branch-select').value;
-  const folder   = document.getElementById('upload-path').value.trim().replace(/^\/|\/$/g,'');
-  const message  = document.getElementById('upload-message').value.trim() || 'Update files';
-
-  if (!repoName || !branch) { toast('Please select a repo and branch', 'error'); return; }
-  if (!uploadFiles.length)  { toast('No files selected', 'error'); return; }
-
-  const btn = document.getElementById('upload-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Uploading...';
-
-  let ok = 0, fail = 0;
-  for (const file of uploadFiles) {
-    try {
-      const content = await toBase64(file);
-      const path = folder ? `${folder}/${file.name}` : file.name;
-      const url = `https://api.github.com/repos/${currentUser.login}/${repoName}/contents/${path}`;
-
-      // Check if file exists (need SHA to update)
-      let sha = null;
-      try {
-        const check = await ghFetch(`${url}?ref=${branch}`);
-        if (check.ok) { const j = await check.json(); sha = j.sha; }
-      } catch(_) {}
-
-      const body = { message, content, branch };
-      if (sha) body.sha = sha;
-
-      const res = await ghFetch(url, null, { method: 'PUT', body: JSON.stringify(body) });
-      if (res.ok) ok++; else fail++;
-    } catch(e) { fail++; }
-  }
-
-  if (ok) toast(`${ok} file(s) uploaded successfully! Watching deploy...`, 'success');
-  if (fail) toast(`${fail} file(s) failed to upload`, 'error');
-
-  uploadFiles = [];
-  renderFileList();
-  btn.disabled = false;
-  btn.innerHTML = '⬆️ Upload & Commit';
-
-  if (ok) {
-    // Switch deploy select to this repo and start polling
-    document.getElementById('deploy-repo-select').value = repoName;
-    showView('deploy');
-    startDeployPolling(repoName);
-  }
 }
 
 function toBase64(file) {
@@ -1097,170 +1194,226 @@ function toBase64(file) {
   });
 }
 
-// ============================================================
-// BRANCHES
-// ============================================================
-async function loadBranches() {
-  const repoName = document.getElementById('branches-repo-select')?.value;
-  if (!repoName) return;
+async function doUpload() {
+  if (!selectedRepo) return;
+  const repoName = selectedRepo.name;
+  const branch   = document.getElementById('upload-branch-select').value;
+  const folder   = document.getElementById('upload-path').value.trim().replace(/^\/|\/$/g,'');
+  const message  = document.getElementById('upload-message').value.trim() || 'Update files';
 
-  document.getElementById('branches-repo-label').textContent = repoName;
-  const repo = repos.find(r => r.name === repoName);
+  if (!branch)          { toast('Select a branch', 'error'); return; }
+  if (!uploadFiles.length){ toast('No files selected', 'error'); return; }
 
-  const res = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/branches`);
-  const branches = await res.json();
+  const btn = document.getElementById('upload-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Uploading...';
 
-  const listEl = document.getElementById('branch-list');
-  listEl.innerHTML = branches.length ? branches.map(b => `
-    <div class="branch-item">
-      <div class="branch-name">
-        🌿 ${b.name}
-        ${b.name === repo?.default_branch ? '<span class="branch-default-badge">default</span>' : ''}
-      </div>
-      <div class="flex gap-2">
-        <button class="btn btn-secondary btn-sm" onclick="copyToClipboard('${b.name}')">Copy name</button>
-      </div>
-    </div>
-  `).join('') : '<div class="empty-state"><div class="empty-state-text">No branches found.</div></div>';
+  let ok = 0, fail = 0;
+  for (const file of uploadFiles) {
+    try {
+      const content = await toBase64(file);
+      const path = folder ? `${folder}/${file.name}` : file.name;
+      const url = `https://api.github.com/repos/${currentUser.login}/${repoName}/contents/${path}`;
+      let sha = null;
+      try {
+        const check = await ghFetch(`${url}?ref=${branch}`);
+        if (check.ok) { const j = await check.json(); sha = j.sha; }
+      } catch(_) {}
+      const body = { message, content, branch };
+      if (sha) body.sha = sha;
+      const res = await ghFetch(url, null, { method:'PUT', body:JSON.stringify(body) });
+      if (res.ok) ok++; else fail++;
+    } catch(e) { fail++; }
+  }
 
-  // Populate "based on" select
-  const fromSel = document.getElementById('new-branch-from');
-  fromSel.innerHTML = branches.map(b => `<option value="${b.name}" ${b.name===repo?.default_branch?'selected':''}>${b.name}</option>`).join('');
-}
+  if (ok) toast(`${ok} file(s) uploaded successfully!`, 'success');
+  if (fail) toast(`${fail} file(s) failed to upload`, 'error');
 
-async function doCreateBranch() {
-  const repoName = document.getElementById('branches-repo-select').value;
-  const newName  = document.getElementById('new-branch-name').value.trim();
-  const fromBranch = document.getElementById('new-branch-from').value;
+  uploadFiles = [];
+  renderFileList();
+  btn.disabled = false;
+  btn.innerHTML = '⬆️ Upload & Commit';
 
-  if (!repoName) { toast('Select a repository first', 'error'); return; }
-  if (!newName)  { toast('Enter a branch name', 'error'); return; }
-
-  // Get SHA of source branch
-  const refRes = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/git/ref/heads/${fromBranch}`);
-  if (!refRes.ok) { toast('Could not get source branch info', 'error'); return; }
-  const refData = await refRes.json();
-  const sha = refData.object.sha;
-
-  const res = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/git/refs`, null, {
-    method: 'POST',
-    body: JSON.stringify({ ref: `refs/heads/${newName}`, sha })
-  });
-
-  if (res.ok) {
-    toast(`Branch "${newName}" created!`, 'success');
-    document.getElementById('new-branch-name').value = '';
-    loadBranches();
-  } else {
-    const err = await res.json();
-    toast(err.message || 'Failed to create branch', 'error');
+  if (ok) {
+    // Start watching deploy status
+    setStatusBuilding();
+    startStatusPolling(true);
   }
 }
 
 // ============================================================
-// DEPLOY STATUS + AUTO-POLLING
+// STATUS BAR
 // ============================================================
-let deployPollTimer = null;
+function setStatusNoProject() {
+  document.getElementById('status-project-name').textContent = 'No project selected';
+  document.getElementById('status-dot').className = 'status-dot none';
+  document.getElementById('status-text').textContent = '—';
+  document.getElementById('status-meta').textContent = '';
+  hideTip();
+}
 
-function startDeployPolling(repoName) {
-  stopDeployPolling();
-  let attempts = 0;
-  const maxAttempts = 24; // poll for up to ~2 minutes
-  const indicator = document.getElementById('poll-indicator');
-  if (indicator) indicator.style.display = 'inline-flex';
+function setStatusBuilding() {
+  if (!selectedRepo) return;
+  document.getElementById('status-project-name').textContent = selectedRepo.name;
+  document.getElementById('status-dot').className = 'status-dot building';
+  document.getElementById('status-text').textContent = 'Deployment in Progress';
+  document.getElementById('status-meta').textContent = 'This usually takes 1–2 minutes…';
+  hideTip();
+
+  // Set a 2-min fail timer
+  if (deployFailTimer) clearTimeout(deployFailTimer);
+  deployFailTimer = setTimeout(() => {
+    // Only mark failed if still building
+    if (document.getElementById('status-dot').className.includes('building')) {
+      setStatusFailed();
+    }
+  }, 120000);
+}
+
+function setStatusLive(deployedAt, pagesUrl) {
+  if (!selectedRepo) return;
+  if (deployFailTimer) { clearTimeout(deployFailTimer); deployFailTimer = null; }
+  const wasBuilding = lastDeployStatus === 'building';
+  lastDeployStatus = 'live';
+  lastDeployTime = deployedAt;
+
+  document.getElementById('status-project-name').textContent = selectedRepo.name;
+  document.getElementById('status-dot').className = 'status-dot live';
+  document.getElementById('status-text').textContent = 'Project is Deployed';
+  document.getElementById('status-meta').innerHTML = deployedAt
+    ? `Last deployed ${formatDateTime(deployedAt)}${pagesUrl ? ` · <a href="${pagesUrl}" target="_blank" class="status-url">${pagesUrl}</a>` : ''}`
+    : (pagesUrl ? `<a href="${pagesUrl}" target="_blank" class="status-url">${pagesUrl}</a>` : '');
+
+  if (wasBuilding) {
+    toast('🎉 Deployment complete!', 'success');
+    showRefreshTip();
+  }
+}
+
+function setStatusFailed() {
+  if (!selectedRepo) return;
+  lastDeployStatus = 'failed';
+  document.getElementById('status-project-name').textContent = selectedRepo.name;
+  document.getElementById('status-dot').className = 'status-dot failed';
+  document.getElementById('status-text').textContent = 'Deployment Failed';
+  document.getElementById('status-meta').textContent = 'The deploy did not complete within 2 minutes. Check GitHub Actions for details.';
+  hideTip();
+  stopStatusPolling();
+}
+
+function setStatusNone() {
+  if (!selectedRepo) return;
+  lastDeployStatus = 'none';
+  document.getElementById('status-project-name').textContent = selectedRepo.name;
+  document.getElementById('status-dot').className = 'status-dot none';
+  document.getElementById('status-text').textContent = 'Not deployed';
+  document.getElementById('status-meta').textContent = 'GitHub Pages is not enabled for this project.';
+  hideTip();
+}
+
+function showRefreshTip() {
+  const tip = document.getElementById('status-tip');
+  tip.textContent = '💡 Press Ctrl+Shift+R (Win/Linux) or Cmd+Shift+R (Mac) to hard-refresh your site';
+  tip.style.display = 'block';
+  // Auto-hide after 30 seconds
+  setTimeout(() => hideTip(), 30000);
+}
+
+function hideTip() {
+  document.getElementById('status-tip').style.display = 'none';
+}
+
+// ============================================================
+// STATUS POLLING
+// ============================================================
+let statusPollTimer = null;
+let pollCount = 0;
+
+function startStatusPolling(isAfterUpload = false) {
+  stopStatusPolling();
+  pollCount = 0;
+  const maxPolls = isAfterUpload ? 30 : 5; // poll more aggressively after upload
+
   async function poll() {
-    attempts++;
-    await loadDeploy();
-    // Check if latest run is done
-    const dots = document.querySelectorAll('.run-status-dot.in_progress, .run-status-dot.queued');
-    const pagesBuilding = document.querySelector('.pages-status.building');
-    if ((dots.length === 0 && !pagesBuilding) || attempts >= maxAttempts) {
-      stopDeployPolling();
-      if (attempts < maxAttempts) toast('Deploy complete! 🎉', 'success');
-    } else {
-      deployPollTimer = setTimeout(poll, 5000);
+    pollCount++;
+    await updateStatusBar();
+    const done = lastDeployStatus === 'live' || lastDeployStatus === 'failed' || lastDeployStatus === 'none';
+    if (!done && pollCount < maxPolls) {
+      statusPollTimer = setTimeout(poll, isAfterUpload ? 5000 : 15000);
     }
   }
-  // Short initial delay to let GitHub register the run
-  deployPollTimer = setTimeout(poll, 3000);
+
+  statusPollTimer = setTimeout(poll, isAfterUpload ? 3000 : 500);
 }
 
-function stopDeployPolling() {
-  if (deployPollTimer) { clearTimeout(deployPollTimer); deployPollTimer = null; }
-  const indicator = document.getElementById('poll-indicator');
-  if (indicator) indicator.style.display = 'none';
+function stopStatusPolling() {
+  if (statusPollTimer) { clearTimeout(statusPollTimer); statusPollTimer = null; }
 }
 
-async function loadDeploy() {
-  const repoName = document.getElementById('deploy-repo-select').value;
-  if (!repoName) return;
+async function updateStatusBar() {
+  if (!selectedRepo) return;
+  const repoName = selectedRepo.name;
+  const prevStatus = lastDeployStatus;
 
-  // Pages status
-  const pagesArea = document.getElementById('pages-status-area');
   try {
+    // Check Pages
     const pRes = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/pages`);
-    if (pRes.ok) {
-      const pages = await pRes.json();
-      const isLive = pages.status === 'built';
-      pagesArea.innerHTML = `
-        <div class="pages-status ${isLive?'live':'building'}">
-          <span>${isLive?'🟢':'🟡'}</span>
-          <div>
-            <div style="font-weight:700">${isLive ? 'Pages Live' : 'Pages Building...'}</div>
-            <a href="${pages.html_url}" target="_blank" class="pages-url">${pages.html_url}</a>
-          </div>
-        </div>`;
-    } else {
-      pagesArea.innerHTML = `<div class="pages-status none"><span>⚪</span><span style="color:var(--text-dim)">GitHub Pages not enabled for this repo</span></div>`;
+    if (!pRes.ok) {
+      setStatusNone();
+      return;
     }
-  } catch(_) { pagesArea.innerHTML = ''; }
+    const pages = await pRes.json();
+    const pagesUrl = pages.html_url;
 
-  // Actions runs
-  const runsEl = document.getElementById('runs-list');
-  runsEl.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:8px 0">Loading runs...</div>';
-  try {
-    const rRes = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/actions/runs?per_page=10`);
+    // Check latest Actions run for a deploy-related workflow
+    const rRes = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/actions/runs?per_page=5`);
     if (rRes.ok) {
       const data = await rRes.json();
-      if (!data.workflow_runs?.length) {
-        runsEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💤</div><div class="empty-state-text">No workflow runs found.</div></div>';
-        return;
+      const runs = data.workflow_runs || [];
+      const latest = runs[0];
+
+      if (latest) {
+        const status = latest.conclusion || latest.status;
+        if (status === 'in_progress' || status === 'queued') {
+          lastDeployStatus = 'building';
+          // Only call setStatusBuilding if we weren't already showing building
+          if (prevStatus !== 'building') setStatusBuilding();
+          return;
+        }
+        if (status === 'success') {
+          setStatusLive(latest.updated_at, pagesUrl);
+          return;
+        }
+        if (status === 'failure' || status === 'cancelled') {
+          setStatusFailed();
+          return;
+        }
       }
-      runsEl.innerHTML = data.workflow_runs.map(run => {
-        const status = run.conclusion || run.status;
-        const labels = { success:'Success', failure:'Failed', in_progress:'Running', queued:'Queued', cancelled:'Cancelled' };
-        return `
-          <div class="run-item">
-            <div class="run-status-dot ${status}"></div>
-            <div class="run-info">
-              <div class="run-name">${run.name} — ${run.head_commit?.message?.split('\n')[0] || 'no message'}</div>
-              <div class="run-meta">Branch: ${run.head_branch} · ${timeAgo(run.updated_at)}</div>
-            </div>
-            <div class="flex gap-2 items-center">
-              <span class="run-badge ${status}">${labels[status]||status}</span>
-              <a href="${run.html_url}" target="_blank" class="btn btn-secondary btn-sm">Details ↗</a>
-            </div>
-          </div>`;
-      }).join('');
+    }
+
+    // Fallback: just check pages.status
+    if (pages.status === 'built') {
+      setStatusLive(null, pagesUrl);
     } else {
-      runsEl.innerHTML = '<div class="empty-state"><div class="empty-state-text">No Actions data available (Actions may not be enabled).</div></div>';
+      lastDeployStatus = 'building';
+      if (prevStatus !== 'building') setStatusBuilding();
     }
   } catch(e) {
-    runsEl.innerHTML = '<div class="empty-state"><div class="empty-state-text">Could not load workflow runs.</div></div>';
+    // silently fail status update
   }
 }
 
 // ============================================================
-// NEW REPO
+// NEW PROJECT / REPO
 // ============================================================
 async function doCreateRepo() {
-  const name    = document.getElementById('new-repo-name').value.trim();
-  const desc    = document.getElementById('new-repo-desc').value.trim();
-  const priv    = document.getElementById('new-repo-visibility').value === 'private';
-  const readme  = document.getElementById('new-repo-readme').checked;
-  const pages   = document.getElementById('new-repo-pages').checked;
+  const name   = document.getElementById('new-repo-name').value.trim();
+  const desc   = document.getElementById('new-repo-desc').value.trim();
+  const priv   = document.getElementById('new-repo-visibility').value === 'private';
+  const readme = document.getElementById('new-repo-readme').checked;
+  const pages  = document.getElementById('new-repo-pages').checked;
 
-  if (!name) { toast('Enter a repository name', 'error'); return; }
+  if (!name) { toast('Enter a project name', 'error'); return; }
 
   const res = await ghFetch('https://api.github.com/user/repos', null, {
     method: 'POST',
@@ -1269,29 +1422,27 @@ async function doCreateRepo() {
 
   if (!res.ok) {
     const err = await res.json();
-    toast(err.message || 'Failed to create repository', 'error');
+    toast(err.message || 'Failed to create project', 'error');
     return;
   }
 
-  const newRepo = await res.json();
-  toast(`Repository "${name}" created!`, 'success');
+  toast(`Project "${name}" created!`, 'success');
+  document.getElementById('new-repo-name').value = '';
+  document.getElementById('new-repo-desc').value = '';
 
   if (pages && readme) {
-    // Enable Pages on main branch
     setTimeout(async () => {
       await ghFetch(`https://api.github.com/repos/${currentUser.login}/${name}/pages`, null, {
         method: 'POST',
-        body: JSON.stringify({ source: { branch: 'main', path: '/' } }),
+        body: JSON.stringify({ source: { branch:'main', path:'/' } }),
         headers: { 'Accept': 'application/vnd.github.switcheroo-preview+json' }
       });
       toast('GitHub Pages enabled!', 'success');
     }, 2000);
   }
 
-  document.getElementById('new-repo-name').value = '';
-  document.getElementById('new-repo-desc').value = '';
   await loadRepos();
-  showView('repos');
+  selectProject(name);
 }
 
 // ============================================================
@@ -1302,7 +1453,7 @@ function copyToClipboard(text) {
 }
 
 // ============================================================
-// INIT — check for saved token
+// INIT
 // ============================================================
 (async function init() {
   const saved = localStorage.getItem('gh_token');
@@ -1319,7 +1470,6 @@ function copyToClipboard(text) {
     } catch(_) {}
     localStorage.removeItem('gh_token');
   }
-  document.getElementById('login-screen').style.display = 'flex';
 })();
 
 document.getElementById('token-input').addEventListener('keydown', e => {
