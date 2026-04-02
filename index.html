@@ -1057,7 +1057,7 @@ function refreshDraftUI() {
     document.getElementById('dest-draft').classList.toggle('active', publishDest === 'draft');
     // Update intro text
     if (publishDest === 'draft') {
-      introText.innerHTML = 'Drop your files below and click <strong>Save to Draft</strong>. Your live site won't change — preview your draft at the link above first.';
+      introText.innerHTML = 'Drop your files below and click <strong>Save to Draft</strong>. Your live site won\u2019t change \u2014 preview your draft at the link above first.';
       document.getElementById('upload-btn').innerHTML = '✏️ Save to Draft';
     } else {
       introText.innerHTML = 'Drop your updated file(s) below and click <strong>Publish to Site</strong>. HubDash automatically saves a copy of whatever it replaces, so you can always undo.';
