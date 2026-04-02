@@ -767,6 +767,7 @@ body {
 let token = '', currentUser = null, repos = [], selectedRepo = null, uploadFiles = [];
 let snapshots = {};
 let statusPollTimer = null, deployFailTimer = null, lastDeployStatus = null, pollCount = 0;
+let lastPublishedAt = null; // timestamp of most recent publish action
 // draftSettings: { repoName: true/false }
 let draftSettings = {};
 // publishDest: 'live' or 'draft'
@@ -1337,6 +1338,7 @@ async function doPublish() {
   const btn = document.getElementById('upload-btn');
   btn.disabled = true;
   btn.innerHTML = `<span class="spinner"></span> ${isDraft ? 'Saving to Draft…' : 'Publishing…'}`;
+  if (!isDraft) lastPublishedAt = new Date();
 
   const fileNames = uploadFiles.map(f => f.name).join(', ');
   const timestamp = new Date().toLocaleString(undefined, {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -1483,6 +1485,7 @@ function setStatusLive(deployedAt, pagesUrl) {
   if (deployFailTimer) { clearTimeout(deployFailTimer); deployFailTimer = null; }
   const wasBuilding = lastDeployStatus === 'building';
   lastDeployStatus = 'live';
+  lastPublishedAt = null; // clear so future polls aren't blocked
   document.getElementById('status-project-name').textContent = selectedRepo.name;
   document.getElementById('status-dot').className = 'status-dot live';
   document.getElementById('status-text').textContent = 'Site is live ✓';
@@ -1554,6 +1557,16 @@ async function updateStatusBar() {
         const status = latest.conclusion || latest.status;
         if (status === 'failure' || status === 'cancelled') { setStatusFailed(); return; }
         if (status === 'success') {
+          // Make sure this successful run is newer than our last publish action.
+          // If not, GitHub hasn't registered the new run yet — keep showing building.
+          if (lastPublishedAt) {
+            const runFinished = new Date(latest.updated_at);
+            if (runFinished < lastPublishedAt) {
+              lastDeployStatus = 'building';
+              if (prevStatus !== 'building') setStatusBuilding();
+              return;
+            }
+          }
           const pRes2 = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/pages`);
           const pagesUrl2 = pRes2.ok ? (await pRes2.json()).html_url : null;
           setStatusLive(latest.updated_at, pagesUrl2);
