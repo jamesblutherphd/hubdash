@@ -9,23 +9,23 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #0d1117;
-  --surface: #161b22;
-  --surface2: #1c2128;
-  --border: #30363d;
-  --border2: #21262d;
-  --text: #e6edf3;
-  --text-dim: #7d8590;
-  --text-muted: #484f58;
-  --accent: #58a6ff;
-  --accent-dim: rgba(88,166,255,0.12);
-  --green: #3fb950;
-  --green-dim: rgba(63,185,80,0.12);
-  --yellow: #d29922;
-  --yellow-dim: rgba(210,153,34,0.12);
-  --red: #f85149;
-  --red-dim: rgba(248,81,73,0.12);
-  --purple: #bc8cff;
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface2: #f0f2f5;
+  --border: #d0d7de;
+  --border2: #e1e4e8;
+  --text: #1a1f2e;
+  --text-dim: #57606a;
+  --text-muted: #9198a1;
+  --accent: #0969da;
+  --accent-dim: rgba(9,105,218,0.08);
+  --green: #1a7f37;
+  --green-dim: rgba(26,127,55,0.1);
+  --yellow: #9a6700;
+  --yellow-dim: rgba(154,103,0,0.1);
+  --red: #d1242f;
+  --red-dim: rgba(209,36,47,0.1);
+  --purple: #8250df;
   --radius: 8px;
   --radius-lg: 12px;
 }
@@ -462,8 +462,8 @@ body {
   justify-content: center;
   background: var(--bg);
   background-image:
-    radial-gradient(ellipse at 30% 20%, rgba(88,166,255,0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 80%, rgba(188,140,255,0.06) 0%, transparent 50%);
+    radial-gradient(ellipse at 30% 20%, rgba(9,105,218,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(130,80,223,0.05) 0%, transparent 50%);
 }
 
 .login-card {
@@ -736,7 +736,12 @@ body {
             <div class="section-title">Deploy Status</div>
             <div class="section-subtitle">GitHub Actions runs &amp; Pages status</div>
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="loadDeploy()">Refresh</button>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="poll-indicator" style="display:none;font-size:0.75rem;color:var(--yellow);font-family:'JetBrains Mono',monospace;">
+              <span class="spinner"></span> watching...
+            </span>
+            <button class="btn btn-secondary btn-sm" onclick="loadDeploy()">Refresh</button>
+          </div>
         </div>
         <div class="card">
           <div class="form-group">
@@ -905,6 +910,7 @@ function showView(name) {
   document.getElementById(`nav-${name}`)?.classList.add('active');
 
   if (name === 'deploy') loadDeploy();
+  else stopDeployPolling();
   if (name === 'upload') syncRepoSelects();
   if (name === 'branches') syncRepoSelects();
 }
@@ -1066,13 +1072,20 @@ async function doUpload() {
     } catch(e) { fail++; }
   }
 
-  if (ok) toast(`${ok} file(s) uploaded successfully!`, 'success');
+  if (ok) toast(`${ok} file(s) uploaded successfully! Watching deploy...`, 'success');
   if (fail) toast(`${fail} file(s) failed to upload`, 'error');
 
   uploadFiles = [];
   renderFileList();
   btn.disabled = false;
   btn.innerHTML = '⬆️ Upload & Commit';
+
+  if (ok) {
+    // Switch deploy select to this repo and start polling
+    document.getElementById('deploy-repo-select').value = repoName;
+    showView('deploy');
+    startDeployPolling(repoName);
+  }
 }
 
 function toBase64(file) {
@@ -1145,8 +1158,39 @@ async function doCreateBranch() {
 }
 
 // ============================================================
-// DEPLOY STATUS
+// DEPLOY STATUS + AUTO-POLLING
 // ============================================================
+let deployPollTimer = null;
+
+function startDeployPolling(repoName) {
+  stopDeployPolling();
+  let attempts = 0;
+  const maxAttempts = 24; // poll for up to ~2 minutes
+  const indicator = document.getElementById('poll-indicator');
+  if (indicator) indicator.style.display = 'inline-flex';
+  async function poll() {
+    attempts++;
+    await loadDeploy();
+    // Check if latest run is done
+    const dots = document.querySelectorAll('.run-status-dot.in_progress, .run-status-dot.queued');
+    const pagesBuilding = document.querySelector('.pages-status.building');
+    if ((dots.length === 0 && !pagesBuilding) || attempts >= maxAttempts) {
+      stopDeployPolling();
+      if (attempts < maxAttempts) toast('Deploy complete! 🎉', 'success');
+    } else {
+      deployPollTimer = setTimeout(poll, 5000);
+    }
+  }
+  // Short initial delay to let GitHub register the run
+  deployPollTimer = setTimeout(poll, 3000);
+}
+
+function stopDeployPolling() {
+  if (deployPollTimer) { clearTimeout(deployPollTimer); deployPollTimer = null; }
+  const indicator = document.getElementById('poll-indicator');
+  if (indicator) indicator.style.display = 'none';
+}
+
 async function loadDeploy() {
   const repoName = document.getElementById('deploy-repo-select').value;
   if (!repoName) return;
