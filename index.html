@@ -999,10 +999,15 @@ async function doDeleteProject() {
     try { localStorage.setItem('hubdash_drafts', JSON.stringify(draftSettings)); } catch(_) {}
     selectedRepo = null;
     stopStatusPolling();
-    await loadRepos();
+    // Switch view immediately so it feels responsive
     showView('welcome');
     setStatusNoProject();
     updateManageButtons();
+    // Remove from local list right away so sidebar updates instantly
+    repos = repos.filter(r => r.name !== name);
+    renderProjectList();
+    // Then do a full refresh from GitHub to confirm
+    await loadRepos();
   } else {
     let msg = 'Failed to delete project.';
     try { const err = await res.json(); msg = err.message || msg; } catch(_) {}
