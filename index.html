@@ -342,6 +342,85 @@ body {
   border-radius: 6px; padding: 5px 10px; animation: fadeIn 0.4s ease;
 }
 
+/* DRAFT DESTINATION TOGGLE */
+.dest-toggle {
+  display: flex; gap: 0; margin-bottom: 20px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; background: var(--bg);
+}
+.dest-btn {
+  flex: 1; padding: 9px 14px; font-family: 'Syne', sans-serif;
+  font-size: 0.82rem; font-weight: 700; cursor: pointer;
+  border: none; background: none; color: var(--text-muted);
+  transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.dest-btn.active { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
+.dest-btn.live.active { color: var(--green); }
+.dest-btn.draft.active { color: var(--accent); }
+
+.draft-url-bar {
+  display: none; align-items: center; gap: 10px;
+  background: var(--accent-dim); border: 1px solid rgba(9,105,218,0.15);
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px;
+  font-size: 0.8rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;
+}
+.draft-url-bar.visible { display: flex; }
+.draft-url-bar a { color: var(--accent); text-decoration: none; font-weight: 700; }
+.draft-url-bar a:hover { text-decoration: underline; }
+
+.btn-make-live {
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 6px; padding: 10px 20px;
+  cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-make-live:hover { background: #0558b6; }
+.btn-make-live:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* SIDEBAR MANAGE BUTTONS */
+.manage-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 8px 10px; background: none; border: 1px solid transparent;
+  border-radius: var(--radius); cursor: pointer;
+  font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700;
+  color: var(--text-muted); transition: all 0.15s; text-align: left;
+  margin-bottom: 4px;
+}
+.manage-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+.manage-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.manage-btn.active-feature { color: var(--green); }
+.manage-btn.active-feature:hover { color: var(--green); background: var(--green-dim); border-color: rgba(26,127,55,0.2); }
+.manage-btn.danger { color: var(--text-muted); }
+.manage-btn.danger:hover:not(:disabled) { background: var(--red-dim); color: var(--red); border-color: rgba(209,36,47,0.2); }
+.manage-btn-icon { font-size: 0.95rem; width: 18px; text-align: center; flex-shrink: 0; }
+
+/* DELETE VIEW */
+#view-delete { display: none; }
+.delete-header { margin-bottom: 24px; }
+.delete-title { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; color: var(--red); margin-bottom: 4px; }
+.delete-sub { font-size: 0.85rem; color: var(--text-dim); }
+.danger-card {
+  background: var(--red-dim); border: 1px solid rgba(209,36,47,0.25);
+  border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px;
+}
+.danger-warning { font-size: 0.88rem; line-height: 1.6; color: var(--text); margin-bottom: 16px; }
+.danger-warning strong { color: var(--red); }
+.delete-confirm-label { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 8px; display: block; }
+.delete-confirm-label code {
+  background: rgba(209,36,47,0.1); color: var(--red);
+  padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.85em;
+}
+.btn-delete-confirm {
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.88rem;
+  background: var(--red); color: #fff;
+  border: none; border-radius: 6px; padding: 10px 20px;
+  cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 16px;
+}
+.btn-delete-confirm:hover:not(:disabled) { background: #a81c26; }
+.btn-delete-confirm:disabled { opacity: 0.35; cursor: not-allowed; }
+
 /* MISC */
 .empty-state { text-align: center; padding: 36px 20px; color: var(--text-muted); }
 .empty-state-icon { font-size: 2.2rem; margin-bottom: 10px; }
@@ -451,8 +530,16 @@ body {
       </div>
       <div class="sidebar-manage">
         <div class="sidebar-section-label" style="padding:0 4px 8px">Manage</div>
-        <button class="btn-new-project" onclick="showNewProject()">
+        <button class="btn-new-project" onclick="showNewProject()" style="margin-bottom:6px">
           <span class="plus">+</span> New Project
+        </button>
+        <button class="manage-btn" id="btn-enable-drafts" onclick="toggleDrafts()" disabled>
+          <span class="manage-btn-icon">✏️</span>
+          <span id="drafts-btn-label">Enable Drafts</span>
+        </button>
+        <button class="manage-btn danger" id="btn-delete-project" onclick="showDeleteProject()" disabled>
+          <span class="manage-btn-icon">🗑️</span>
+          Delete Project
         </button>
       </div>
     </div>
@@ -500,8 +587,29 @@ body {
             <button class="btn-restore" id="btn-restore" onclick="doRestore()">↩ Undo — Go Back</button>
           </div>
 
+          <!-- Draft destination toggle (only shown when drafts enabled) -->
+          <div id="dest-toggle-wrap" style="display:none">
+            <div class="draft-url-bar" id="draft-url-bar">
+              <span>✏️ Draft preview:</span>
+              <a id="draft-url-link" href="#" target="_blank">—</a>
+              <span style="color:var(--text-muted)">· Not visible on your live site</span>
+            </div>
+            <div class="dest-toggle">
+              <button class="dest-btn live active" id="dest-live" onclick="setDest('live')">🟢 Live Site</button>
+              <button class="dest-btn draft" id="dest-draft" onclick="setDest('draft')">✏️ Draft</button>
+            </div>
+            <div id="make-live-wrap" style="display:none;margin-bottom:16px">
+              <button class="btn-make-live" onclick="doDraftToLive()" id="btn-make-live">
+                🚀 Publish Draft to Live Site
+              </button>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;font-family:'JetBrains Mono',monospace">
+                This will replace your live site with everything currently in your Draft.
+              </div>
+            </div>
+          </div>
+
           <div class="card">
-            <p class="publish-intro">Drop your updated file(s) below and click <strong>Publish to Site</strong>. HubDash automatically saves a copy of whatever it replaces, so you can always undo.</p>
+            <p class="publish-intro" id="publish-intro-text">Drop your updated file(s) below and click <strong>Publish to Site</strong>. HubDash automatically saves a copy of whatever it replaces, so you can always undo.</p>
 
             <div class="drop-zone" id="drop-zone"
               onclick="document.getElementById('file-input').click()"
@@ -610,6 +718,30 @@ body {
         </div>
       </div>
 
+      <!-- Delete Project -->
+      <div id="view-delete">
+        <div class="delete-header">
+          <div class="delete-title" id="delete-title">Delete Project</div>
+          <div class="delete-sub">This action is permanent and cannot be undone.</div>
+        </div>
+        <div class="danger-card">
+          <div class="danger-warning">
+            You are about to permanently delete <strong id="delete-repo-name-display">this project</strong> and everything in it — all files, history, and settings. <strong>There is no undo.</strong>
+          </div>
+          <label class="delete-confirm-label">
+            To confirm, type <code id="delete-confirm-hint">project-name</code> below:
+          </label>
+          <input type="text" id="delete-confirm-input" class="form-input"
+            placeholder="Type the project name here"
+            oninput="onDeleteConfirmInput()" autocomplete="off" spellcheck="false">
+          <br>
+          <button class="btn-delete-confirm" id="btn-delete-confirm" disabled onclick="doDeleteProject()">
+            🗑️ Permanently Delete This Project
+          </button>
+        </div>
+        <button class="btn btn-secondary" onclick="cancelDelete()">← Cancel, keep this project</button>
+      </div>
+
     </div><!-- /#main -->
   </div><!-- /#workspace -->
 
@@ -636,6 +768,10 @@ body {
 let token = '', currentUser = null, repos = [], selectedRepo = null, uploadFiles = [];
 let snapshots = {};
 let statusPollTimer = null, deployFailTimer = null, lastDeployStatus = null, pollCount = 0;
+// draftSettings: { repoName: true/false }
+let draftSettings = {};
+// publishDest: 'live' or 'draft'
+let publishDest = 'live';
 
 // AUTH
 async function doLogin() {
@@ -670,6 +806,7 @@ async function bootApp() {
   document.getElementById('avatar-initials').textContent = initials;
   document.getElementById('username-display').textContent = currentUser.login;
   try { const s = localStorage.getItem('hubdash_snapshots'); if (s) snapshots = JSON.parse(s); } catch(_) {}
+  try { const d = localStorage.getItem('hubdash_drafts'); if (d) draftSettings = JSON.parse(d); } catch(_) {}
   await loadRepos();
 }
 
@@ -734,9 +871,7 @@ function renderProjectList() {
 function selectProject(name) {
   selectedRepo = repos.find(r => r.name === name);
   renderProjectList();
-  document.getElementById('view-welcome').style.display = 'none';
-  document.getElementById('view-project').style.display = 'block';
-  document.getElementById('view-new-project').style.display = 'none';
+  showView('project');
 
   document.getElementById('proj-title').textContent = selectedRepo.name;
   const meta = [];
@@ -755,9 +890,15 @@ function selectProject(name) {
     liveLink.style.display = 'inline-flex';
   } else { liveLink.style.display = 'none'; }
 
+  // Update manage sidebar buttons
+  updateManageButtons();
+
+  // Reset publish panel
   uploadFiles = [];
   renderFileList();
   document.getElementById('upload-path').value = '';
+  publishDest = 'live';
+  refreshDraftUI();
   renderRestoreBanner();
   renderSnapshotHistory();
   switchTab('publish');
@@ -766,17 +907,111 @@ function selectProject(name) {
   startStatusPolling();
 }
 
+// MANAGE SIDEBAR BUTTONS
+function updateManageButtons() {
+  const hasDrafts = selectedRepo && draftSettings[selectedRepo.name];
+  const draftBtn = document.getElementById('btn-enable-drafts');
+  const deleteBtn = document.getElementById('btn-delete-project');
+  const label = document.getElementById('drafts-btn-label');
+
+  if (selectedRepo) {
+    draftBtn.disabled = false;
+    deleteBtn.disabled = false;
+    if (hasDrafts) {
+      draftBtn.classList.add('active-feature');
+      label.textContent = '✓ Drafts Enabled';
+    } else {
+      draftBtn.classList.remove('active-feature');
+      label.textContent = 'Enable Drafts';
+    }
+  } else {
+    draftBtn.disabled = true;
+    deleteBtn.disabled = true;
+    draftBtn.classList.remove('active-feature');
+    label.textContent = 'Enable Drafts';
+  }
+}
+
+// SHOW/HIDE VIEWS
+function showView(name) {
+  ['welcome','project','new-project','delete'].forEach(v => {
+    const el = document.getElementById(`view-${v}`);
+    if (el) el.style.display = 'none';
+  });
+  const target = document.getElementById(`view-${name}`);
+  if (target) target.style.display = (name === 'welcome') ? 'flex' : 'block';
+}
+
 function showNewProject() {
-  selectedRepo = null; renderProjectList(); stopStatusPolling();
-  document.getElementById('view-welcome').style.display = 'none';
-  document.getElementById('view-project').style.display = 'none';
-  document.getElementById('view-new-project').style.display = 'block';
+  selectedRepo = null;
+  renderProjectList();
+  updateManageButtons();
+  stopStatusPolling();
+  showView('new-project');
   setStatusNoProject();
 }
 function cancelNewProject() {
-  document.getElementById('view-new-project').style.display = 'none';
-  document.getElementById('view-welcome').style.display = 'flex';
+  showView('welcome');
   setStatusNoProject();
+}
+
+// DELETE PROJECT
+function showDeleteProject() {
+  if (!selectedRepo) return;
+  const name = selectedRepo.name;
+  document.getElementById('delete-title').textContent = `Delete "${name}"`;
+  document.getElementById('delete-repo-name-display').textContent = `"${name}"`;
+  document.getElementById('delete-confirm-hint').textContent = name;
+  document.getElementById('delete-confirm-input').value = '';
+  document.getElementById('btn-delete-confirm').disabled = true;
+  showView('delete');
+  stopStatusPolling();
+}
+
+function cancelDelete() {
+  showView('project');
+  updateStatusBar();
+  startStatusPolling();
+}
+
+function onDeleteConfirmInput() {
+  const val = document.getElementById('delete-confirm-input').value;
+  document.getElementById('btn-delete-confirm').disabled = (val !== selectedRepo?.name);
+}
+
+async function doDeleteProject() {
+  if (!selectedRepo) return;
+  const name = selectedRepo.name;
+  const btn = document.getElementById('btn-delete-confirm');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Deleting…';
+
+  const res = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${name}`, null, {
+    method: 'DELETE'
+  });
+
+  if (res.ok || res.status === 204) {
+    toast(`"${name}" has been permanently deleted.`, 'info');
+    // Clean up local state
+    delete snapshots[name];
+    delete draftSettings[name];
+    try { localStorage.setItem('hubdash_snapshots', JSON.stringify(snapshots)); } catch(_) {}
+    try { localStorage.setItem('hubdash_drafts', JSON.stringify(draftSettings)); } catch(_) {}
+    selectedRepo = null;
+    stopStatusPolling();
+    await loadRepos();
+    showView('welcome');
+    setStatusNoProject();
+    updateManageButtons();
+  } else {
+    let msg = 'Failed to delete project.';
+    try { const err = await res.json(); msg = err.message || msg; } catch(_) {}
+    // Common case: token lacks delete_repo scope
+    if (res.status === 403) msg = 'Permission denied. Make sure your token has the "delete_repo" permission.';
+    toast(msg, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '🗑️ Permanently Delete This Project';
+  }
 }
 
 // TABS
@@ -793,6 +1028,182 @@ function toggleAdvanced() {
   const caret = document.getElementById('advanced-caret');
   const open = panel.classList.toggle('open');
   caret.classList.toggle('open', open);
+}
+
+// ============================================================
+// DRAFTS
+// ============================================================
+function draftFolderUrl() {
+  if (!selectedRepo || !currentUser) return '#';
+  return `https://${currentUser.login}.github.io/${selectedRepo.name}/draft/`;
+}
+
+function refreshDraftUI() {
+  const hasDrafts = selectedRepo && draftSettings[selectedRepo.name];
+  const wrap = document.getElementById('dest-toggle-wrap');
+  const introText = document.getElementById('publish-intro-text');
+
+  if (hasDrafts) {
+    wrap.style.display = 'block';
+    // Set draft URL bar
+    const url = draftFolderUrl();
+    document.getElementById('draft-url-link').href = url;
+    document.getElementById('draft-url-link').textContent = url;
+    // Show/hide make-live wrap based on current dest
+    document.getElementById('make-live-wrap').style.display = publishDest === 'draft' ? 'block' : 'none';
+    document.getElementById('draft-url-bar').classList.toggle('visible', publishDest === 'draft');
+    // Highlight correct toggle button
+    document.getElementById('dest-live').classList.toggle('active', publishDest === 'live');
+    document.getElementById('dest-draft').classList.toggle('active', publishDest === 'draft');
+    // Update intro text
+    if (publishDest === 'draft') {
+      introText.innerHTML = 'Drop your files below and click <strong>Save to Draft</strong>. Your live site won't change — preview your draft at the link above first.';
+      document.getElementById('upload-btn').innerHTML = '✏️ Save to Draft';
+    } else {
+      introText.innerHTML = 'Drop your updated file(s) below and click <strong>Publish to Site</strong>. HubDash automatically saves a copy of whatever it replaces, so you can always undo.';
+      document.getElementById('upload-btn').innerHTML = '🚀 Publish to Site';
+    }
+  } else {
+    wrap.style.display = 'none';
+    introText.innerHTML = 'Drop your updated file(s) below and click <strong>Publish to Site</strong>. HubDash automatically saves a copy of whatever it replaces, so you can always undo.';
+    const btn = document.getElementById('upload-btn');
+    if (!btn.disabled) btn.innerHTML = '🚀 Publish to Site';
+  }
+}
+
+function setDest(dest) {
+  publishDest = dest;
+  refreshDraftUI();
+}
+
+async function toggleDrafts() {
+  if (!selectedRepo) return;
+  const name = selectedRepo.name;
+  const hasDrafts = draftSettings[name];
+
+  if (hasDrafts) {
+    // Offer to disable — simple confirm
+    if (!confirm(`Disable Drafts for "${name}"? This won't delete any files already in your draft/ folder.`)) return;
+    delete draftSettings[name];
+    try { localStorage.setItem('hubdash_drafts', JSON.stringify(draftSettings)); } catch(_) {}
+    toast('Drafts disabled for this project.', 'info');
+    publishDest = 'live';
+    refreshDraftUI();
+    updateManageButtons();
+    return;
+  }
+
+  // Enable drafts: create draft/.gitkeep so the folder exists
+  const draftBtn = document.getElementById('btn-enable-drafts');
+  draftBtn.disabled = true;
+  document.getElementById('drafts-btn-label').textContent = 'Setting up…';
+
+  try {
+    // Check if draft folder already exists
+    const checkRes = await ghFetch(
+      `https://api.github.com/repos/${currentUser.login}/${name}/contents/draft/.gitkeep`
+    );
+
+    if (!checkRes.ok) {
+      // Create the placeholder file
+      const timestamp = new Date().toLocaleString(undefined, {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+      const res = await ghFetch(
+        `https://api.github.com/repos/${currentUser.login}/${name}/contents/draft/.gitkeep`,
+        null,
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            message: `HubDash: enabled Drafts — ${timestamp}`,
+            content: btoa('# HubDash draft folder')
+          })
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        toast(err.message || 'Could not enable Drafts', 'error');
+        draftBtn.disabled = false;
+        updateManageButtons();
+        return;
+      }
+    }
+
+    draftSettings[name] = true;
+    try { localStorage.setItem('hubdash_drafts', JSON.stringify(draftSettings)); } catch(_) {}
+    toast(`Drafts enabled! Files saved to Draft won't affect your live site.`, 'success');
+    refreshDraftUI();
+    updateManageButtons();
+  } catch(e) {
+    toast('Could not enable Drafts: ' + e.message, 'error');
+    draftBtn.disabled = false;
+    updateManageButtons();
+  }
+}
+
+// "Publish Draft to Live Site" — copy all files from draft/ to root
+async function doDraftToLive() {
+  if (!selectedRepo) return;
+  const name = selectedRepo.name;
+  const btn = document.getElementById('btn-make-live');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Publishing Draft…';
+
+  try {
+    // Get all files in draft/ folder
+    const res = await ghFetch(
+      `https://api.github.com/repos/${currentUser.login}/${name}/contents/draft`
+    );
+    if (!res.ok) { toast('Could not read Draft folder', 'error'); btn.disabled=false; btn.innerHTML='🚀 Publish Draft to Live Site'; return; }
+    const items = await res.json();
+    const files = items.filter(i => i.type === 'file' && i.name !== '.gitkeep');
+
+    if (!files.length) { toast('Your Draft folder is empty — nothing to publish.', 'info'); btn.disabled=false; btn.innerHTML='🚀 Publish Draft to Live Site'; return; }
+
+    const timestamp = new Date().toLocaleString(undefined, {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const newSnapshots = [];
+    let ok = 0, fail = 0;
+
+    for (const file of files) {
+      try {
+        // Fetch the file content from draft/
+        const blobRes = await ghFetch(
+          `https://api.github.com/repos/${currentUser.login}/${name}/git/blobs/${file.sha}`
+        );
+        if (!blobRes.ok) { fail++; continue; }
+        const blob = await blobRes.json();
+        const content = blob.content.replace(/\n/g, '');
+
+        const destUrl = `https://api.github.com/repos/${currentUser.login}/${name}/contents/${file.name}`;
+        // Check if file exists at root (for snapshot + sha)
+        let existingSha = null;
+        try {
+          const check = await ghFetch(destUrl);
+          if (check.ok) {
+            const existing = await check.json();
+            existingSha = existing.sha;
+            newSnapshots.push({ path: file.name, sha: existingSha, filename: file.name, savedAt: new Date().toISOString(), branch: selectedRepo.default_branch || 'main', repoName: name });
+          }
+        } catch(_) {}
+
+        const body = { message: `HubDash: published draft to live — ${file.name} ${timestamp}`, content };
+        if (existingSha) body.sha = existingSha;
+
+        const putRes = await ghFetch(destUrl, null, { method:'PUT', body:JSON.stringify(body) });
+        if (putRes.ok) ok++; else fail++;
+      } catch(e) { fail++; }
+    }
+
+    if (ok) {
+      toast(`${ok} file(s) from Draft are now live!`, 'success');
+      if (newSnapshots.length) { saveSnapshot(name, newSnapshots); renderRestoreBanner(); renderSnapshotHistory(); }
+      setDest('live');
+      setStatusBuilding();
+      startStatusPolling(true);
+    }
+    if (fail) toast(`${fail} file(s) failed to publish`, 'error');
+  } catch(e) { toast('Something went wrong: ' + e.message, 'error'); }
+
+  btn.disabled = false;
+  btn.innerHTML = '🚀 Publish Draft to Live Site';
 }
 
 // BRANCHES
@@ -832,8 +1243,7 @@ async function doCreateBranch() {
   if (!refRes.ok) { toast('Could not get source branch info', 'error'); return; }
   const refData = await refRes.json();
   const res = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${selectedRepo.name}/git/refs`, null, {
-    method: 'POST',
-    body: JSON.stringify({ ref: `refs/heads/${newName}`, sha: refData.object.sha })
+    method: 'POST', body: JSON.stringify({ ref: `refs/heads/${newName}`, sha: refData.object.sha })
   });
   if (res.ok) {
     toast(`Branch "${newName}" created!`, 'success');
@@ -859,7 +1269,12 @@ function renderFileList() {
       <span class="file-chip-size">${(f.size/1024).toFixed(1)} KB</span>
       <span class="file-chip-remove" onclick="removeFile('${f.name}')">×</span>
     </div>`).join('');
-  document.getElementById('upload-btn').disabled = uploadFiles.length === 0;
+  const btn = document.getElementById('upload-btn');
+  btn.disabled = uploadFiles.length === 0;
+  if (uploadFiles.length > 0) {
+    const hasDrafts = selectedRepo && draftSettings[selectedRepo.name];
+    btn.innerHTML = hasDrafts && publishDest === 'draft' ? '✏️ Save to Draft' : '🚀 Publish to Site';
+  }
 }
 function toBase64(file) {
   return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(file); });
@@ -905,17 +1320,25 @@ async function doPublish() {
   if (!selectedRepo) return;
   const repoName = selectedRepo.name;
   const branch   = document.getElementById('upload-branch-select').value;
-  const folder   = document.getElementById('upload-path').value.trim().replace(/^\/|\/$/g,'');
+  const advFolder = document.getElementById('upload-path').value.trim().replace(/^\/|\/$/g,'');
+  const isDraft  = selectedRepo && draftSettings[selectedRepo.name] && publishDest === 'draft';
+
+  // Determine target folder
+  let folder = advFolder;
+  if (isDraft) folder = advFolder ? `draft/${advFolder}` : 'draft';
+
   if (!branch)            { toast('No branch selected', 'error'); return; }
   if (!uploadFiles.length){ toast('No files selected', 'error'); return; }
 
   const btn = document.getElementById('upload-btn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Publishing…';
+  btn.innerHTML = `<span class="spinner"></span> ${isDraft ? 'Saving to Draft…' : 'Publishing…'}`;
 
   const fileNames = uploadFiles.map(f => f.name).join(', ');
   const timestamp = new Date().toLocaleString(undefined, {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  const commitMessage = `HubDash update: ${fileNames} — ${timestamp}`;
+  const commitMessage = isDraft
+    ? `HubDash draft: ${fileNames} — ${timestamp}`
+    : `HubDash update: ${fileNames} — ${timestamp}`;
 
   const newSnapshots = [];
   let ok = 0, fail = 0;
@@ -932,8 +1355,9 @@ async function doPublish() {
         if (check.ok) {
           const existing = await check.json();
           existingSha = existing.sha;
-          // Save snapshot of old file
-          newSnapshots.push({ path, sha: existingSha, filename: file.name, savedAt: new Date().toISOString(), branch, repoName });
+          if (!isDraft) {
+            newSnapshots.push({ path, sha: existingSha, filename: file.name, savedAt: new Date().toISOString(), branch, repoName });
+          }
         }
       } catch(_) {}
 
@@ -946,18 +1370,24 @@ async function doPublish() {
   }
 
   if (ok) {
-    toast(`${ok} file(s) published!`, 'success');
-    if (newSnapshots.length) { saveSnapshot(repoName, newSnapshots); renderRestoreBanner(); renderSnapshotHistory(); }
-    setStatusBuilding();
-    startStatusPolling(true);
+    if (isDraft) {
+      toast(`${ok} file(s) saved to Draft!`, 'success');
+      // Show the draft URL bar
+      document.getElementById('draft-url-bar').classList.add('visible');
+    } else {
+      toast(`${ok} file(s) published!`, 'success');
+      if (newSnapshots.length) { saveSnapshot(repoName, newSnapshots); renderRestoreBanner(); renderSnapshotHistory(); }
+      setStatusBuilding();
+      startStatusPolling(true);
+    }
   }
-  if (fail) toast(`${fail} file(s) failed to publish`, 'error');
+  if (fail) toast(`${fail} file(s) failed`, 'error');
 
   uploadFiles = [];
   renderFileList();
   document.getElementById('file-input').value = '';
   btn.disabled = false;
-  btn.innerHTML = '🚀 Publish to Site';
+  btn.innerHTML = isDraft ? '✏️ Save to Draft' : '🚀 Publish to Site';
 }
 
 // RESTORE — undo entire last batch
@@ -969,7 +1399,6 @@ async function doRestore() {
   const btn = document.getElementById('btn-restore');
   btn.disabled = true; btn.textContent = 'Restoring…';
 
-  // Most-recent snapshot per unique filename
   const toRestore = [];
   const seen = new Set();
   for (const s of snaps) { if (!seen.has(s.filename)) { seen.add(s.filename); toRestore.push(s); } }
@@ -981,7 +1410,6 @@ async function doRestore() {
 
   if (ok) {
     toast(`${ok} file(s) restored to previous version!`, 'success');
-    // Remove the restored entries
     const restoredKeys = new Set(toRestore.map(r => r.filename + '|' + r.savedAt));
     snapshots[repoName] = snaps.filter(s => !restoredKeys.has(s.filename + '|' + s.savedAt));
     try { localStorage.setItem('hubdash_snapshots', JSON.stringify(snapshots)); } catch(_) {}
@@ -993,7 +1421,6 @@ async function doRestore() {
   btn.disabled = false; btn.textContent = '↩ Undo — Go Back';
 }
 
-// RESTORE — single file from history list
 async function doRestoreSingle(index) {
   const repoName = selectedRepo?.name;
   const snaps = getSnapshots(repoName);
@@ -1010,13 +1437,11 @@ async function doRestoreSingle(index) {
 }
 
 async function restoreFile(snap) {
-  // Fetch old blob content from GitHub
   const blobRes = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${snap.repoName}/git/blobs/${snap.sha}`);
   if (!blobRes.ok) throw new Error('Could not fetch old version');
   const blob = await blobRes.json();
   const oldContent = blob.content.replace(/\n/g, '');
 
-  // Get current file's SHA (needed to update it)
   const url = `https://api.github.com/repos/${currentUser.login}/${snap.repoName}/contents/${snap.path}`;
   const check = await ghFetch(`${url}?ref=${snap.branch}`);
   if (!check.ok) throw new Error('Current file not found');
@@ -1025,12 +1450,7 @@ async function restoreFile(snap) {
   const timestamp = new Date().toLocaleString(undefined, {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   const res = await ghFetch(url, null, {
     method: 'PUT',
-    body: JSON.stringify({
-      message: `HubDash restore: ${snap.filename} reverted ${timestamp}`,
-      content: oldContent,
-      sha: current.sha,
-      branch: snap.branch
-    })
+    body: JSON.stringify({ message: `HubDash restore: ${snap.filename} reverted ${timestamp}`, content: oldContent, sha: current.sha, branch: snap.branch })
   });
   if (!res.ok) { const err = await res.json(); throw new Error(err.message || 'Restore failed'); }
 }
@@ -1143,8 +1563,7 @@ async function doCreateRepo() {
   const pages  = document.getElementById('new-repo-pages').checked;
   if (!name) { toast('Enter a project name', 'error'); return; }
   const res = await ghFetch('https://api.github.com/user/repos', null, {
-    method: 'POST',
-    body: JSON.stringify({ name, description: desc, private: priv, auto_init: readme })
+    method: 'POST', body: JSON.stringify({ name, description: desc, private: priv, auto_init: readme })
   });
   if (!res.ok) { const err = await res.json(); toast(err.message || 'Failed to create project', 'error'); return; }
   toast(`Project "${name}" created!`, 'success');
