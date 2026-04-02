@@ -1537,25 +1537,44 @@ async function updateStatusBar() {
   const repoName = selectedRepo.name;
   const prevStatus = lastDeployStatus;
   try {
+    // Actions runs checked FIRST — most accurate picture of what is happening right now
+    const rRes = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/actions/runs?per_page=10`);
+    if (rRes.ok) {
+      const data = await rRes.json();
+      const runs = data.workflow_runs || [];
+      // If ANY run is in progress or queued, we are building — full stop
+      const activeRun = runs.find(r => r.status === 'in_progress' || r.status === 'queued');
+      if (activeRun) {
+        lastDeployStatus = 'building';
+        if (prevStatus !== 'building') setStatusBuilding();
+        return;
+      }
+      // No active run — look at the most recent completed one
+      const latest = runs[0];
+      if (latest) {
+        const status = latest.conclusion || latest.status;
+        if (status === 'failure' || status === 'cancelled') { setStatusFailed(); return; }
+        if (status === 'success') {
+          const pRes2 = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/pages`);
+          const pagesUrl2 = pRes2.ok ? (await pRes2.json()).html_url : null;
+          setStatusLive(latest.updated_at, pagesUrl2);
+          return;
+        }
+      }
+    }
+    // Actions unavailable or no runs yet — fall back to Pages API cautiously
     const pRes = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/pages`);
     if (!pRes.ok) { setStatusNone(); return; }
     const pages = await pRes.json();
-    const pagesUrl = pages.html_url;
-    const rRes = await ghFetch(`https://api.github.com/repos/${currentUser.login}/${repoName}/actions/runs?per_page=5`);
-    if (rRes.ok) {
-      const data = await rRes.json();
-      const latest = (data.workflow_runs||[])[0];
-      if (latest) {
-        const status = latest.conclusion || latest.status;
-        if (status==='in_progress'||status==='queued') {
-          lastDeployStatus='building'; if (prevStatus!=='building') setStatusBuilding(); return;
-        }
-        if (status==='success') { setStatusLive(latest.updated_at, pagesUrl); return; }
-        if (status==='failure'||status==='cancelled') { setStatusFailed(); return; }
-      }
+    // Only show live if Pages says built AND we weren't mid-build
+    // (pages.status can lag behind a new in-progress deploy)
+    if (pages.status === 'built' && prevStatus !== 'building') {
+      setStatusLive(null, pages.html_url);
+    } else if (pages.status !== 'built') {
+      lastDeployStatus = 'building';
+      if (prevStatus !== 'building') setStatusBuilding();
     }
-    if (pages.status==='built') { setStatusLive(null, pagesUrl); }
-    else { lastDeployStatus='building'; if (prevStatus!=='building') setStatusBuilding(); }
+    // If pages says built but we were building: stay in building state, keep polling
   } catch(e) {}
 }
 
